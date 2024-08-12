@@ -11,69 +11,48 @@ on:
         tags:
             - "v*.*"
     workflow_dispatch:
-      inputs:
-        version:
-          description: 'The release version of GLIDE, formatted as *.*.* or *.*.*-rc*'
-          required: true
+        inputs:
+            version:
+                description: 'The release version of GLIDE, formatted as *.*.* or *.*.*-rc*'
+                required: true
 
 concurrency:
     group: java-cd-${{ github.head_ref || github.ref }}
     cancel-in-progress: true
 
 permissions:
-      id-token: write
+    id-token: write
 
 jobs:
-    start-self-hosted-runner:
-        if: github.repository_owner == 'valkey-io'
+    load-platform-matrix:
         runs-on: ubuntu-latest
-        environment: AWS_ACTIONS
+        outputs:
+            PLATFORM_MATRIX: ${{ steps.load-platform-matrix.outputs.PLATFORM_MATRIX }}
         steps:
-          - name: Checkout
-            uses: actions/checkout@v4
-            with:
-                fetch-depth: 0
+            -   name: Checkout
+                uses: actions/checkout@v4
 
-          - name: Start self hosted EC2 runner
-            uses: ./.github/workflows/start-self-hosted-runner
-            with:
-                role-to-assume: ${{ secrets.ROLE_TO_ASSUME }}
-                aws-region: ${{ secrets.AWS_REGION }}
-                ec2-instance-id: ${{ secrets.AWS_EC2_INSTANCE_ID }}
+            -   name: load-platform-matrix
+                id: load-platform-matrix
+                shell: bash
+                run: |
+                    # Get the matrix from the matrix.json file, without the object that has the IMAGE key
+                    export "PLATFORM_MATRIX=$(jq 'map(select(.PACKAGE_MANAGERS | contains(["maven"])))' < .github/json_matrices/build-matrix.json | jq -c .)"
+                    echo "PLATFORM_MATRIX=${PLATFORM_MATRIX}" >> $GITHUB_OUTPUT
 
     create-binaries-to-publish:
-        needs: start-self-hosted-runner
+        needs: load-platform-matrix
         if: github.repository_owner == 'valkey-io'
         timeout-minutes: 35
         env:
             JAVA_VERSION: '11'
         strategy:
             # Run all jobs
-            fail-fast: false
+            fail-fast: true
             matrix:
-                host:
-                  - {
-                    OS: ubuntu,
-                    RUNNER: ubuntu-latest,
-                    TARGET: x86_64-unknown-linux-gnu,
-                  }
-                  - {
-                    OS: ubuntu,
-                    RUNNER: ["self-hosted", "Linux", "ARM64"],
-                    TARGET: aarch64-unknown-linux-gnu,
-                  }
-                  - {
-                    OS: macos,
-                    RUNNER: macos-12,
-                    TARGET: x86_64-apple-darwin,
-                  }
-                  - {
-                    OS: macos,
-                    RUNNER: macos-latest,
-                    TARGET: aarch64-apple-darwin,
-                  }
+                build: ${{fromJson(needs.load-platform-matrix.outputs.PLATFORM_MATRIX)}}
 
-        runs-on: ${{ matrix.host.RUNNER }}
+        runs-on: ${{ matrix.build.RUNNER }}
 
         steps:
             - name: Setup self-hosted runner access
@@ -86,7 +65,6 @@ jobs:
                   else
                     echo "No cleaning needed"
                   fi
-
             - uses: actions/checkout@v4
               with:
                   submodules: recursive
@@ -104,8 +82,8 @@ jobs:
                   echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
                   echo "Release version detected: $R_VERSION"
               env:
-                EVENT_NAME: ${{ github.event_name }}
-                INPUT_VERSION: ${{ github.event.inputs.version }}
+                  EVENT_NAME: ${{ github.event_name }}
+                  INPUT_VERSION: ${{ github.event.inputs.version }}
 
             - name: Set up JDK
               uses: actions/setup-java@v4
@@ -116,8 +94,8 @@ jobs:
             - name: Install shared software dependencies
               uses: ./.github/workflows/install-shared-dependencies
               with:
-                  os: ${{ matrix.host.OS }}
-                  target: ${{ matrix.host.TARGET }}
+                  os: ${{ matrix.build.OS }}
+                  target: ${{ matrix.build.TARGET }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Install protoc (protobuf)
@@ -149,12 +127,41 @@ jobs:
                   jar -cvf bundle.jar *
                   ls -ltr
                   cd -
-                  cp $src_folder/bundle.jar bundle-${{ matrix.host.TARGET }}.jar
+                  cp $src_folder/bundle.jar bundle-${{ matrix.build.TARGET }}.jar
 
             - name: Upload artifacts to publish
               continue-on-error: true
               uses: actions/upload-artifact@v4
               with:
-                  name: java-${{ matrix.host.TARGET }}
+                  name: java-${{ matrix.build.TARGET }}
                   path: |
                       java/bundle*.jar
+
+    combine-binaries-to-one-directory:
+        needs: create-binaries-to-publish
+        runs-on: ubuntu-latest
+        env:
+            INPUT_VERSION: ${{ github.event.inputs.version }}
+        steps:
+            - name: Download published artifacts
+              uses: actions/download-artifact@v4
+
+            - name: Display structure of downloaded files
+              run: ls -R
+
+            - name: Move all files to one zip file
+            # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
+            # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
+              run: |
+                mkdir bundles
+                mv ./java-aarch64-apple-darwin/* bundles
+                mv ./java-x86_64-apple-darwin/* bundles
+                mv ./java-x86_64-unknown-linux-gnu/* bundles
+                zip -r bundles-${{ env.INPUT_VERSION }}.zip bundles
+
+            - name: Upload artifacts to publish
+              uses: actions/upload-artifact@v4
+              with:
+                name: bundles-${{ env.INPUT_VERSION }}.zip
+                path: |
+                  bundles-${{ env.INPUT_VERSION }}.zip
