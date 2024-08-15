@@ -26,19 +26,20 @@ permissions:
 jobs:
     load-platform-matrix:
         runs-on: ubuntu-latest
+        environment: AWS_ACTIONS
         outputs:
             PLATFORM_MATRIX: ${{ steps.load-platform-matrix.outputs.PLATFORM_MATRIX }}
         steps:
-            -   name: Checkout
-                uses: actions/checkout@v4
+            - name: Checkout
+              uses: actions/checkout@v4
 
-            -   name: load-platform-matrix
-                id: load-platform-matrix
-                shell: bash
-                run: |
-                    # Get the matrix from the matrix.json file, without the object that has the IMAGE key
-                    export "PLATFORM_MATRIX=$(jq 'map(select(.PACKAGE_MANAGERS | contains(["maven"])))' < .github/json_matrices/build-matrix.json | jq -c .)"
-                    echo "PLATFORM_MATRIX=${PLATFORM_MATRIX}" >> $GITHUB_OUTPUT
+            - name: load-platform-matrix
+              id: load-platform-matrix
+              shell: bash
+              run: |
+                  # Get the matrix from the matrix.json file, without the object that has the IMAGE key
+                  export "PLATFORM_MATRIX=$(jq 'map(select(.PACKAGE_MANAGERS | contains(["maven"])))' < .github/json_matrices/build-matrix.json | jq -c .)"
+                  echo "PLATFORM_MATRIX=${PLATFORM_MATRIX}" >> $GITHUB_OUTPUT
 
     create-binaries-to-publish:
         needs: load-platform-matrix
@@ -48,11 +49,11 @@ jobs:
             JAVA_VERSION: '11'
         strategy:
             # Run all jobs
-            fail-fast: true
+            fail-fast: false
             matrix:
-                build: ${{fromJson(needs.load-platform-matrix.outputs.PLATFORM_MATRIX)}}
+                host: ${{fromJson(needs.load-platform-matrix.outputs.PLATFORM_MATRIX)}}
 
-        runs-on: ${{ matrix.build.RUNNER }}
+        runs-on: ${{ matrix.host.RUNNER }}
 
         steps:
             - name: Setup self-hosted runner access
@@ -94,8 +95,8 @@ jobs:
             - name: Install shared software dependencies
               uses: ./.github/workflows/install-shared-dependencies
               with:
-                  os: ${{ matrix.build.OS }}
-                  target: ${{ matrix.build.TARGET }}
+                  os: ${{ matrix.host.OS }}
+                  target: ${{ matrix.host.TARGET }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Install protoc (protobuf)
@@ -127,13 +128,13 @@ jobs:
                   jar -cvf bundle.jar *
                   ls -ltr
                   cd -
-                  cp $src_folder/bundle.jar bundle-${{ matrix.build.TARGET }}.jar
+                  cp $src_folder/bundle.jar bundle-${{ matrix.host.TARGET }}.jar
 
             - name: Upload artifacts to publish
               continue-on-error: true
               uses: actions/upload-artifact@v4
               with:
-                  name: java-${{ matrix.build.TARGET }}
+                  name: java-${{ matrix.host.TARGET }}
                   path: |
                       java/bundle*.jar
 
