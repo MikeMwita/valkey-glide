@@ -140,14 +140,24 @@ jobs:
     combine-binaries-to-one-directory:
         needs: create-binaries-to-publish
         runs-on: ubuntu-latest
-        env:
-            INPUT_VERSION: ${{ github.event.inputs.version }}
         steps:
             - name: Download published artifacts
               uses: actions/download-artifact@v4
 
-            - name: Display structure of downloaded files
-              run: ls -R
+            - name: Set the release version
+              shell: bash
+              run: |
+                if ${{ github.event_name == 'pull_request' }}; then
+                  R_VERSION="255.255.255"
+                elif ${{ github.event_name == 'workflow_dispatch' }}; then
+                  R_VERSION="${{ env.INPUT_VERSION }}"
+                else
+                  R_VERSION=${GITHUB_REF:11}
+                fi
+                echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
+                echo "Release version detected: $R_VERSION"
+              env:
+                INPUT_VERSION: ${{ github.event.inputs.version }}
 
             - name: Move all files to one zip file
             # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
@@ -157,11 +167,10 @@ jobs:
                 mv ./java-aarch64-apple-darwin/* bundles
                 mv ./java-x86_64-apple-darwin/* bundles
                 mv ./java-x86_64-unknown-linux-gnu/* bundles
-                zip -r bundles-${{ env.INPUT_VERSION }}.zip bundles
 
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
-                name: bundles-${{ env.INPUT_VERSION }}.zip
+                name: bundles-${{ env.RELEASE_VERSION }}
                 path: |
-                  bundles-${{ env.INPUT_VERSION }}.zip
+                  bundles
