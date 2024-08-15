@@ -26,7 +26,7 @@ permissions:
 jobs:
     load-platform-matrix:
         runs-on: ubuntu-latest
-        environment: AWS_ACTIONS
+#        environment: AWS_ACTIONS
         outputs:
             PLATFORM_MATRIX: ${{ steps.load-platform-matrix.outputs.PLATFORM_MATRIX }}
         steps:
@@ -160,16 +160,22 @@ jobs:
               env:
                 INPUT_VERSION: ${{ github.event.inputs.version }}
 
-            - name: Move all files to one zip file
+            - name: Move all required files to one directory
             # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
             # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
               run: |
-                mkdir bundles
-                mv ./java-*/* bundles
+                mkdir maven-files
+                cp ./java-*/bundle*.jar bundle.jar
+                mv ./java-*/bundle*.jar maven-files
+                unzip bundle.jar
+                mv valkey-glide-*.pom maven-files
+                mv valkey-glide-*-sources.jar maven-files
+                mv valkey-glide-*.module maven-files
+                mv valkey-glide-*javadoc.jar maven-files
 
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
-                name: bundles-${{ env.RELEASE_VERSION }}
+                name: maven-files-${{ env.RELEASE_VERSION }}
                 path: |
-                  bundles
+                  maven-files
