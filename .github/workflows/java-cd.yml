@@ -165,8 +165,7 @@ jobs:
             # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
               run: |
                 mkdir maven-files
-                cp ./java-*/bundle*.jar bundle.jar
-                mv ./java-*/bundle*.jar maven-files
+                find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./maven-files/bundle.jar
                 unzip bundle.jar
                 mv valkey-glide-*.pom maven-files
                 mv valkey-glide-*-sources.jar maven-files
