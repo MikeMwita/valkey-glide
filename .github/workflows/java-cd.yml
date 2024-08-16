@@ -188,10 +188,10 @@ jobs:
 
             - name: Generate PGP signatures
               env:
-                  SECRING_GPG: ${{ secrets.SECRING_GPG }}
+                  GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
               run: |
                   cd maven-files
-                  gpg --clearsign bundle-aarch64-apple-darwin.jar --passphrase ${{ env.SECRING_GPG }}
+                  gpg --clearsign bundle-aarch64-apple-darwin.jar --passphrase ${{ env.GPG_PASSWORD }}
 
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
