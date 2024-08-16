@@ -22,7 +22,7 @@
         "RUNNER": "macos-12",
         "ARCH": "x64",
         "TARGET": "x86_64-apple-darwin",
-        "PACKAGE_MANAGERS": ["pypi", "npm", "maven"]
+        "PACKAGE_MANAGERS": ["pypi", "npm"]
     },
     {
         "OS": "macos",
@@ -30,7 +30,7 @@
         "RUNNER": "macos-latest",
         "ARCH": "arm64",
         "TARGET": "aarch64-apple-darwin",
-        "PACKAGE_MANAGERS": ["pypi", "npm", "maven"]
+        "PACKAGE_MANAGERS": ["pypi", "npm"]
     },
     {
         "OS": "ubuntu",
