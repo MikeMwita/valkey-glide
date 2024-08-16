@@ -178,6 +178,12 @@ jobs:
                 cd maven-files
                 for file in *; do sha1sum "$file" > ../maven-sha1-files/"$file".sha1 ; done
 
+            - name: Generate md5 files for all maven files
+              run: |
+                  mkdir maven-md5-files
+                  cd maven-files
+                  for file in *; do md5sum "$file" > ../maven-md5-files/"$file".md5 ; done
+
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
@@ -185,3 +191,4 @@ jobs:
                 path: |
                   maven-files
                   maven-sha1-files
+                  maven-md5-files
