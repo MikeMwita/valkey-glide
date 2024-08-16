@@ -172,9 +172,16 @@ jobs:
                 mv valkey-glide-*.module maven-files
                 mv valkey-glide-*javadoc.jar maven-files
 
+            - name: Generate sha1 files for all maven files
+              run: |
+                mkdir maven-sha1-files
+                cd maven-files
+                for file in *; do sha1sum "$file" > ../maven-sha1-files/"$file".sha1 ; done
+
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
                 name: maven-files-${{ env.RELEASE_VERSION }}
                 path: |
                   maven-files
+                  maven-sha1-files
