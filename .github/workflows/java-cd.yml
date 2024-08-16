@@ -186,6 +186,14 @@ jobs:
                   cd maven-files
                   for file in *; do md5sum "$file" > ../maven-md5-files/"$file".md5 ; done
 
+            - name: Generate PGP signatures
+              env:
+                  SECRING_GPG: ${{ secrets.SECRING_GPG }}
+              run: |
+                  apt-get install gpg
+                  cd maven-files
+                  gpg --clearsign bundle-aarch64-apple-darwin.jar --passphrase ${{ env.SECRING_GPG }}
+
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
