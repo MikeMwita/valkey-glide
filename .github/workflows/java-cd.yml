@@ -167,7 +167,7 @@ jobs:
                 mkdir bundles
                 mkdir maven-files
                 find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./bundle.jar
-                mv ./java-*/* bundles
+                mv ./java-*/* maven-files
                 unzip bundle.jar
                 mv valkey-glide-*.pom maven-files
                 mv valkey-glide-*-sources.jar maven-files
