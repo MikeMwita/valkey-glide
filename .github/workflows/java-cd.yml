@@ -190,7 +190,6 @@ jobs:
               env:
                   SECRING_GPG: ${{ secrets.SECRING_GPG }}
               run: |
-#                  apt-get install gpg
                   cd maven-files
                   gpg --clearsign bundle-aarch64-apple-darwin.jar --passphrase ${{ env.SECRING_GPG }}
 
