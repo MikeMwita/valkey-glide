@@ -116,8 +116,10 @@ jobs:
             - name: Build java client
               working-directory: java
               run: |
-                  ./gradlew :client:publishToMavenLocal -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
+                  ./gradlew :client:publishAllPublicationsToOSSRHRepository -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
               env:
+                  MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+                  MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
                   GLIDE_RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
 
             - name: Bundle JAR
@@ -186,12 +188,12 @@ jobs:
                   cd maven-files
                   for file in *; do md5sum "$file" > ../maven-md5-files/"$file".md5 ; done
 
-            - name: 'Install GPG Secret Key'
-              id: import_gpg
-              uses: crazy-max/ghaction-import-gpg@v4
-              with:
-                  gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-                  passphrase: ${{ secrets.GPG_PASSWORD }}
+#            - name: 'Install GPG Secret Key'
+#              id: import_gpg
+#              uses: crazy-max/ghaction-import-gpg@v4
+#              with:
+#                  gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+#                  passphrase: ${{ secrets.GPG_PASSWORD }}
 
             - name: Generate PGP signatures
               run: |

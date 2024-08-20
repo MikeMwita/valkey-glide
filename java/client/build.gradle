@@ -217,6 +217,16 @@ publishing {
         }
     }
     repositories {
+        maven {
+            name = "OSSRH"
+
+            url = uri("https://aws.oss.sonatype.org/service/local/staging/deploy/maven2/")
+
+            credentials {
+                username = System.getenv("CENTRAL_TOKEN_USERNAME")
+                password = System.getenv("CENTRAL_TOKEN_PASSWORD")
+            }
+        }
         mavenLocal()
     }
 }
