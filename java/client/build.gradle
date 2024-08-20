@@ -158,7 +158,7 @@ tasks.register('copyNativeLib', Copy) {
     into sourceSets.main.output.resourcesDir
 }
 
-def defaultReleaseVersion = "255.255.255";
+def defaultReleaseVersion = "255.255.test";
 
 delombok.dependsOn('compileJava')
 jar.dependsOn('copyNativeLib')
@@ -217,7 +217,7 @@ publishing {
         }
     }
     repositories {
-        mavenJava {
+        maven {
             name = "OSSRH"
 
             url = uri("https://aws.oss.sonatype.org/service/local/staging/deploy/maven2/")
