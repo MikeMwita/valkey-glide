@@ -217,7 +217,7 @@ publishing {
         }
     }
     repositories {
-        maven {
+        mavenJava {
             name = "OSSRH"
 
             url = uri("https://aws.oss.sonatype.org/service/local/staging/deploy/maven2/")
