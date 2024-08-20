@@ -120,7 +120,6 @@ jobs:
               env:
                   CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
                   CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
-                  GLIDE_RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
 
             - name: Bundle JAR
               working-directory: java
