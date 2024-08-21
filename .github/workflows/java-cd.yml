@@ -56,10 +56,6 @@ jobs:
         runs-on: ${{ matrix.host.RUNNER }}
 
         steps:
-            - name: Test OSSRH credentials
-              run:
-                  curl -I 'https://s01.oss.sonatype.org/service/local/authentication/login' -u "${{ secrets.CENTRAL_TOKEN_USERNAME }}":"${{ secrets.CENTRAL_TOKEN_PASSWORD }}"
-
             - name: Setup self-hosted runner access
               run: |
                   GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
@@ -120,10 +116,8 @@ jobs:
             - name: Build java client
               working-directory: java
               run: |
-                  ./gradlew :client:publishAllPublicationsToOSSRHRepository -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
+                  ./gradlew :client:publishToMavenLocal -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
               env:
-                  CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
-                  CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
                   GLIDE_RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
 
             - name: Bundle JAR
@@ -212,3 +206,12 @@ jobs:
                   maven-files
                   maven-sha1-files
                   maven-md5-files
+
+            - name: Publish to Maven Central
+              run: |
+                  bearer=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                  curl --request POST \
+                  --verbose \
+                  --header 'Authorization: Bearer ZXhhbXBsZV91c2VybmFtZTpleGFtcGxlX3Bhca3N3b3JkCg==' \
+                  --form bundle=@maven-files.zip \
+                  https://central.sonatype.com/api/v1/publisher/upload
