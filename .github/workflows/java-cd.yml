@@ -66,7 +66,7 @@ jobs:
                   touch test-0.1.0-sources.jar test-0.1.0-sources.jar.asc test-0.1.0-sources.jar.sha1 test-0.1.0-sources.jar.md5
                   touch test-0.1.0-javadoc.jar test-0.1.0-javadoc.jar.asc test-0.1.0-javadoc.jar.sha1 test-0.1.0-javadoc.jar.md5
                   cd ../../../../../..
-                  zip com example
+                  zip example com
                   curl --request POST \
                   --verbose \
                   --header "Authorization: Bearer $BEARER_TOKEN" \
