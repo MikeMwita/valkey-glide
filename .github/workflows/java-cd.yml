@@ -72,13 +72,13 @@ jobs:
 #                  --header "Authorization: Bearer $BEARER_TOKEN" \
 #                  --form bundle=@example.zip \
 #                  https://central.sonatype.com/api/v1/publisher/upload
-            - name: Remove test upload from Maven Central
-              run: |
-                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                  curl --request DELETE \
-                  --verbose \
-                  --header "Authorization: Bearer $BEARER_TOKEN" \
-                  'https://central.sonatype.com/api/v1/publisher/deployment/3ccb02f8-9740-4152-9ab9-b686a342505d'
+#            - name: Remove test upload from Maven Central
+#              run: |
+#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+#                  curl --request DELETE \
+#                  --verbose \
+#                  --header "Authorization: Bearer $BEARER_TOKEN" \
+#                  'https://central.sonatype.com/api/v1/publisher/deployment/3ccb02f8-9740-4152-9ab9-b686a342505d'
             - name: Setup self-hosted runner access
               run: |
                   GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
@@ -216,10 +216,10 @@ jobs:
 #                  gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 #                  passphrase: ${{ secrets.GPG_PASSWORD }}
 
-            - name: Generate PGP signatures
-              run: |
-                  cd maven-files
-                  gpg --detach-sign --armor bundle-aarch64-apple-darwin.jar
+#            - name: Generate PGP signatures
+#              run: |
+#                  cd maven-files
+#                  gpg --detach-sign --armor bundle-aarch64-apple-darwin.jar
 
             - name: Move files to the correct directory tree
               run: |
