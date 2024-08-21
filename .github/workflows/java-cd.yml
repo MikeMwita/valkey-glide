@@ -227,14 +227,13 @@ jobs:
                   cp -a maven-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
                   cp -a maven-sha1-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
                   cp -a maven-md5-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  zip valkey-${{ env.RELEASE_VERSION }} io
 
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
                 name: valkey-${{ env.RELEASE_VERSION }}
                 path: |
-                  valkey-${{ env.RELEASE_VERSION }}.zip
+                  io
 
 #            - name: Publish to Maven Central
 #              run: |
