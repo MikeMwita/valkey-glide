@@ -56,13 +56,22 @@ jobs:
         runs-on: ${{ matrix.host.RUNNER }}
 
         steps:
-            -   name: Publish to Maven Central
-                run: |
-                    BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                    curl --request POST \
-                    --verbose \
-                    --header "Authorization: Bearer $BEARER_TOKEN" \
-                    https://central.sonatype.com/api/v1/publisher/upload
+            - name: Publish to Maven Central
+              run: |
+                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                  mkdir -p com/sonatype/central/example/example_java_project/0.1.0
+                  cd com/sonatype/central/example/example_java_project/0.1.0
+                  touch test-0.1.0.jar test-0.1.0.jar.asc test-0.1.0.jar.sha1 test-0.1.0.jar.md5
+                  touch test-0.1.0.pom test-0.1.0.pom.asc test-0.1.0.pom.sha1 test-0.1.0.pom.md5
+                  touch test-0.1.0-sources.jar test-0.1.0-sources.jar.asc test-0.1.0-sources.jar.sha1 test-0.1.0-sources.jar.md5
+                  touch test-0.1.0-javadoc.jar test-0.1.0-javadoc.jar.asc test-0.1.0-javadoc.jar.sha1 test-0.1.0-javadoc.jar.md5
+                  cd ../../../../../..
+                  zip com example
+                  curl --request POST \
+                  --verbose \
+                  --header "Authorization: Bearer $BEARER_TOKEN" \
+                  --form bundle=@example.zip \
+                  https://central.sonatype.com/api/v1/publisher/upload
             - name: Setup self-hosted runner access
               run: |
                   GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
