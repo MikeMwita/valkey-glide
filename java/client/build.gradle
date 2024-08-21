@@ -158,7 +158,7 @@ tasks.register('copyNativeLib', Copy) {
     into sourceSets.main.output.resourcesDir
 }
 
-def defaultReleaseVersion = "255.255.test";
+def defaultReleaseVersion = "255.255.255";
 
 delombok.dependsOn('compileJava')
 jar.dependsOn('copyNativeLib')

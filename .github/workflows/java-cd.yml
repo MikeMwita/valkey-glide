@@ -56,22 +56,29 @@ jobs:
         runs-on: ${{ matrix.host.RUNNER }}
 
         steps:
-            - name: Publish to Maven Central
+#            - name: Publish to Maven Central
+#              run: |
+#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+#                  mkdir -p com/sonatype/central/example/example_java_project/0.1.0
+#                  cd com/sonatype/central/example/example_java_project/0.1.0
+#                  touch test-0.1.0.jar test-0.1.0.jar.asc test-0.1.0.jar.sha1 test-0.1.0.jar.md5
+#                  touch test-0.1.0.pom test-0.1.0.pom.asc test-0.1.0.pom.sha1 test-0.1.0.pom.md5
+#                  touch test-0.1.0-sources.jar test-0.1.0-sources.jar.asc test-0.1.0-sources.jar.sha1 test-0.1.0-sources.jar.md5
+#                  touch test-0.1.0-javadoc.jar test-0.1.0-javadoc.jar.asc test-0.1.0-javadoc.jar.sha1 test-0.1.0-javadoc.jar.md5
+#                  cd ../../../../../..
+#                  zip example com
+#                  curl --request POST \
+#                  --verbose \
+#                  --header "Authorization: Bearer $BEARER_TOKEN" \
+#                  --form bundle=@example.zip \
+#                  https://central.sonatype.com/api/v1/publisher/upload
+            - name: Remove test upload from Maven Central
               run: |
                   BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                  mkdir -p com/sonatype/central/example/example_java_project/0.1.0
-                  cd com/sonatype/central/example/example_java_project/0.1.0
-                  touch test-0.1.0.jar test-0.1.0.jar.asc test-0.1.0.jar.sha1 test-0.1.0.jar.md5
-                  touch test-0.1.0.pom test-0.1.0.pom.asc test-0.1.0.pom.sha1 test-0.1.0.pom.md5
-                  touch test-0.1.0-sources.jar test-0.1.0-sources.jar.asc test-0.1.0-sources.jar.sha1 test-0.1.0-sources.jar.md5
-                  touch test-0.1.0-javadoc.jar test-0.1.0-javadoc.jar.asc test-0.1.0-javadoc.jar.sha1 test-0.1.0-javadoc.jar.md5
-                  cd ../../../../../..
-                  zip example com
-                  curl --request POST \
+                  curl --request DELETE \
                   --verbose \
                   --header "Authorization: Bearer $BEARER_TOKEN" \
-                  --form bundle=@example.zip \
-                  https://central.sonatype.com/api/v1/publisher/upload
+                  'https://central.sonatype.com/api/v1/publisher/deployment/3ccb02f8-9740-4152-9ab9-b686a342505d'
             - name: Setup self-hosted runner access
               run: |
                   GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
@@ -214,14 +221,20 @@ jobs:
                   cd maven-files
                   gpg --detach-sign --armor bundle-aarch64-apple-darwin.jar
 
+            - name: Move files to the correct directory tree
+              run: |
+                  mkdir -p io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-sha1-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-md5-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  zip valkey-${{ env.RELEASE_VERSION }} io
+
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
                 name: maven-files-${{ env.RELEASE_VERSION }}
                 path: |
-                  maven-files
-                  maven-sha1-files
-                  maven-md5-files
+                  valkey-${{ env.RELEASE_VERSION }}
 
 #            - name: Publish to Maven Central
 #              run: |
