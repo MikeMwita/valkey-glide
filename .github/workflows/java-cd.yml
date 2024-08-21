@@ -223,23 +223,24 @@ jobs:
 
             - name: Move files to the correct directory tree
               run: |
-                  mkdir -p io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  cp -a maven-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  cp -a maven-sha1-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  cp -a maven-md5-files/. io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-sha1-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-md5-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  zip build build
 
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
               with:
                 name: valkey-${{ env.RELEASE_VERSION }}
                 path: |
-                  io
+                  build
 
-#            - name: Publish to Maven Central
-#              run: |
-#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-#                  curl --request POST \
-#                  --verbose \
-#                  --header 'Authorization: Bearer $BEARER_TOKEN' \
-#                  --form bundle=@maven-files.zip \
-#                  https://central.sonatype.com/api/v1/publisher/upload
+            - name: Publish to Maven Central
+              run: |
+                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                  curl --request POST \
+                  --verbose \
+                  --header "Authorization: Bearer $BEARER_TOKEN" \
+                  --form bundle=@build.zip \
+                  https://central.sonatype.com/api/v1/publisher/upload
