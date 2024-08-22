@@ -211,7 +211,7 @@ jobs:
                 mkdir maven-sha1-files
                 cd maven-files
                 ls
-                for file in *; do sha1sum "$file" > ../maven-sha1-files/"$file".sha1 ; done
+                for file in *; do sha1sum "$file" | cut -f 1 -d " " > ../maven-sha1-files/"$file".sha1 ; done
 
             - name: Generate md5 files for all Maven files
               run: |
