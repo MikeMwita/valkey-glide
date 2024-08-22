@@ -86,7 +86,8 @@ jobs:
                   curl --request DELETE \
                   --verbose \
                   --header "Authorization: Bearer $BEARER_TOKEN" \
-                  'https://central.sonatype.com/api/v1/publisher/deployment/8102a501-c890-4c8b-a9c9-559417e34d1a'
+                  'https://central.sonatype.com/api/v1/publisher/deployment/20180f68-83f1-48c8-a932-a91e5cac3d96'
+
             - name: Setup self-hosted runner access
               run: |
                   GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
@@ -221,7 +222,7 @@ jobs:
               run: |
                   mkdir maven-asc-files
                   cd maven-files
-                  for file in *; do gpg --pinentry-mode=loopback --passphrase "${{ secrets.GPG_PASSWORD }}" -ab "$file" > ../maven-asc-files/"$file".md5 ; done
+                  for file in *; do gpg --pinentry-mode=loopback --passphrase "${{ secrets.GPG_PASSWORD }}" -ab "$file" > ../maven-asc-files/"$file".asc ; done
 
 #            - name: 'Install GPG Secret Key'
 #              id: import_gpg
