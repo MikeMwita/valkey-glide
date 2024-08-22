@@ -181,7 +181,7 @@ jobs:
               shell: bash
               run: |
                 if ${{ github.event_name == 'pull_request' }}; then
-                  R_VERSION="255.255.255"
+                  R_VERSION="0.1.0"
                 elif ${{ github.event_name == 'workflow_dispatch' }}; then
                   R_VERSION="${{ env.INPUT_VERSION }}"
                 else
@@ -201,6 +201,7 @@ jobs:
                 find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./bundle.jar
                 mv ./java-*/* maven-files
                 unzip bundle.jar
+                ls
                 mv valkey-glide-*.asc maven-files
                 mv valkey-glide-*.pom maven-files
                 mv valkey-glide-*-sources.jar maven-files
@@ -211,6 +212,7 @@ jobs:
               run: |
                 mkdir maven-sha1-files
                 cd maven-files
+                ls
                 for file in *; do sha1sum "$file" > ../maven-sha1-files/"$file".sha1 ; done
 
             - name: Generate md5 files for all Maven files
