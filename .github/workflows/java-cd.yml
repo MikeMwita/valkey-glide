@@ -196,12 +196,12 @@ jobs:
             # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
             # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
               run: |
-                ls
                 mkdir bundles
                 mkdir maven-files
                 find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./bundle.jar
                 mv ./java-*/* maven-files
-                unzip bundle.jar
+                jar xf bundle.jar
+                ls
                 mv valkey-glide-*.asc maven-files
                 mv valkey-glide-*.pom maven-files
                 mv valkey-glide-*-sources.jar maven-files
