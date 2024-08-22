@@ -106,7 +106,7 @@ jobs:
               shell: bash
               run: |
                   if ${{ github.event_name == 'pull_request' }}; then
-                    R_VERSION="255.255.255"
+                    R_VERSION="0.1.0"
                   elif ${{ github.event_name == 'workflow_dispatch' }}; then
                     R_VERSION="${{ env.INPUT_VERSION }}"
                   else
