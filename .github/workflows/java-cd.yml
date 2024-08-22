@@ -201,6 +201,7 @@ jobs:
                 find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./bundle.jar
                 mv ./java-*/* maven-files
                 unzip bundle.jar
+                mv valkey-glide-*.asc maven-files
                 mv valkey-glide-*.pom maven-files
                 mv valkey-glide-*-sources.jar maven-files
                 mv valkey-glide-*.module maven-files
