@@ -197,7 +197,7 @@ jobs:
                   cp -a maven-files/* build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
                   rm -rf build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}/META-INF
                   cd build
-                  zip -r build io
+                  zip -r ../build io
                   tree
 
             - name: Upload artifacts to publish
