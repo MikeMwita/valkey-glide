@@ -198,8 +198,7 @@ jobs:
               run: |
                 mkdir bundles
                 mkdir maven-files
-                find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./bundle.jar
-                jar xf bundle.jar
+                for file in $(find . -name "*.jar"); do jar xf "$file" ; done
                 mv valkey-glide-*.asc maven-files
                 mv valkey-glide-*.pom maven-files
                 mv valkey-glide-*-sources.jar maven-files
@@ -218,24 +217,6 @@ jobs:
                   mkdir maven-md5-files
                   cd maven-files
                   for file in *; do md5sum "$file" | cut -f 1 -d " " > ../maven-md5-files/"$file".md5 ; done
-
-#            - name: Generate asc files for all Maven files
-#              run: |
-#                  mkdir maven-asc-files
-#                  cd maven-files
-#                  for file in *; do gpg --pinentry-mode=loopback --passphrase "${{ secrets.GPG_PASSWORD }}" -ab "$file" > ../maven-asc-files/"$file".asc ; done
-
-#            - name: 'Install GPG Secret Key'
-#              id: import_gpg
-#              uses: crazy-max/ghaction-import-gpg@v4
-#              with:
-#                  gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-#                  passphrase: ${{ secrets.GPG_PASSWORD }}
-
-#            - name: Generate PGP signatures
-#              run: |
-#                  cd maven-files
-#                  gpg --detach-sign --armor bundle-aarch64-apple-darwin.jar
 
             - name: Move files to the correct directory tree
               run: |
