@@ -158,7 +158,7 @@ tasks.register('copyNativeLib', Copy) {
     into sourceSets.main.output.resourcesDir
 }
 
-def defaultReleaseVersion = "255.255.255";
+def defaultReleaseVersion = "0.1.0";
 
 delombok.dependsOn('compileJava')
 jar.dependsOn('copyNativeLib')
@@ -239,7 +239,7 @@ java {
 
 tasks.withType(Sign) {
     def releaseVersion = System.getenv("GLIDE_RELEASE_VERSION") ?: defaultReleaseVersion;
-    def isReleaseVersion = !releaseVersion.endsWith("SNAPSHOT") && releaseVersion != defaultReleaseVersion;
+    def isReleaseVersion = !releaseVersion.endsWith("SNAPSHOT");// && releaseVersion != defaultReleaseVersion;
     onlyIf("isReleaseVersion is set") { isReleaseVersion }
 }
 
