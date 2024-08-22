@@ -80,13 +80,13 @@ jobs:
 #                  --header "Authorization: Bearer $BEARER_TOKEN" \
 #                  --form bundle=@example.zip \
 #                  https://central.sonatype.com/api/v1/publisher/upload
-            - name: Remove test upload from Maven Central
-              run: |
-                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                  curl --request DELETE \
-                  --verbose \
-                  --header "Authorization: Bearer $BEARER_TOKEN" \
-                  'https://central.sonatype.com/api/v1/publisher/deployment/20180f68-83f1-48c8-a932-a91e5cac3d96'
+#            - name: Remove test upload from Maven Central
+#              run: |
+#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+#                  curl --request DELETE \
+#                  --verbose \
+#                  --header "Authorization: Bearer $BEARER_TOKEN" \
+#                  'https://central.sonatype.com/api/v1/publisher/deployment/20180f68-83f1-48c8-a932-a91e5cac3d96'
 
             - name: Setup self-hosted runner access
               run: |
@@ -218,11 +218,11 @@ jobs:
                   cd maven-files
                   for file in *; do md5sum "$file" | cut -f 1 -d " " > ../maven-md5-files/"$file".md5 ; done
 
-            - name: Generate asc files for all Maven files
-              run: |
-                  mkdir maven-asc-files
-                  cd maven-files
-                  for file in *; do gpg --pinentry-mode=loopback --passphrase "${{ secrets.GPG_PASSWORD }}" -ab "$file" > ../maven-asc-files/"$file".asc ; done
+#            - name: Generate asc files for all Maven files
+#              run: |
+#                  mkdir maven-asc-files
+#                  cd maven-files
+#                  for file in *; do gpg --pinentry-mode=loopback --passphrase "${{ secrets.GPG_PASSWORD }}" -ab "$file" > ../maven-asc-files/"$file".asc ; done
 
 #            - name: 'Install GPG Secret Key'
 #              id: import_gpg
@@ -242,7 +242,6 @@ jobs:
                   cp -a maven-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
                   cp -a maven-sha1-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
                   cp -a maven-md5-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  cp -a maven-asc-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
                   zip build build
 
             - name: Upload artifacts to publish
