@@ -24,195 +24,196 @@ permissions:
     id-token: write
 
 jobs:
-#    load-platform-matrix:
-#        runs-on: ubuntu-latest
-##        environment: AWS_ACTIONS
-#        outputs:
-#            PLATFORM_MATRIX: ${{ steps.load-platform-matrix.outputs.PLATFORM_MATRIX }}
-#        steps:
-#            - name: Checkout
-#              uses: actions/checkout@v4
-#
-#            - name: load-platform-matrix
-#              id: load-platform-matrix
-#              shell: bash
-#              run: |
-#                  # Get the matrix from the matrix.json file, without the object that has the IMAGE key
-#                  export "PLATFORM_MATRIX=$(jq 'map(select(.PACKAGE_MANAGERS | contains(["maven"])))' < .github/json_matrices/build-matrix.json | jq -c .)"
-#                  echo "PLATFORM_MATRIX=${PLATFORM_MATRIX}" >> $GITHUB_OUTPUT
+    load-platform-matrix:
+        runs-on: ubuntu-latest
+#        environment: AWS_ACTIONS
+        outputs:
+            PLATFORM_MATRIX: ${{ steps.load-platform-matrix.outputs.PLATFORM_MATRIX }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-#    create-binaries-to-publish:
-#        needs: load-platform-matrix
-#        if: github.repository_owner == 'valkey-io'
-#        timeout-minutes: 35
-#        env:
-#            JAVA_VERSION: '11'
-#        strategy:
-#            # Run all jobs
-#            fail-fast: false
-#            matrix:
-#                host: ${{fromJson(needs.load-platform-matrix.outputs.PLATFORM_MATRIX)}}
-#
-#        runs-on: ${{ matrix.host.RUNNER }}
-#
-#        steps:
-#            - name: Setup self-hosted runner access
-#              run: |
-#                  GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
-#                  if [ -d $GHA_HOME ]; then
-#                    sudo chown -R $USER:$USER $GHA_HOME
-#                    sudo rm -rf $GHA_HOME
-#                    mkdir -p $GHA_HOME/valkey-glide
-#                  else
-#                    echo "No cleaning needed"
-#                  fi
-#            - uses: actions/checkout@v4
-#              with:
-#                  submodules: recursive
-#
-#            - name: Set the release version
-#              shell: bash
-#              run: |
-#                  if ${{ github.event_name == 'pull_request' }}; then
-#                    R_VERSION="0.1.0"
-#                  elif ${{ github.event_name == 'workflow_dispatch' }}; then
-#                    R_VERSION="${{ env.INPUT_VERSION }}"
-#                  else
-#                    R_VERSION=${GITHUB_REF:11}
-#                  fi
-#                  echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
-#                  echo "Release version detected: $R_VERSION"
-#              env:
-#                  EVENT_NAME: ${{ github.event_name }}
-#                  INPUT_VERSION: ${{ github.event.inputs.version }}
-#
-#            - name: Set up JDK
-#              uses: actions/setup-java@v4
-#              with:
-#                  distribution: "temurin"
-#                  java-version: ${{ env.JAVA_VERSION }}
-#
-#            - name: Install shared software dependencies
-#              uses: ./.github/workflows/install-shared-dependencies
-#              with:
-#                  os: ${{ matrix.host.OS }}
-#                  target: ${{ matrix.host.TARGET }}
-#                  github-token: ${{ secrets.GITHUB_TOKEN }}
-#
-#            - name: Install protoc (protobuf)
-#              uses: arduino/setup-protoc@v3
-#              with:
-#                  version: "26.1"
-#                  repo-token: ${{ secrets.GITHUB_TOKEN }}
-#
-#            - name: Create secret key ring file
-#              working-directory: java/client
-#              run: |
-#                  echo "$SECRING_GPG" | base64 --decode > ./secring.gpg
-#                  ls -ltr
-#              env:
-#                  SECRING_GPG: ${{ secrets.SECRING_GPG }}
-#
-#            - name: Build java client
-#              working-directory: java
-#              run: |
-#                  ./gradlew :client:publishToMavenLocal -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
-#              env:
-#                  GLIDE_RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
-#
-#            - name: Bundle JAR
-#              working-directory: java
-#              run: |
-#                  src_folder=~/.m2/repository/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-#                  cd $src_folder
-#                  jar -cvf bundle.jar *
-#                  ls -ltr
-#                  cd -
-#                  cp $src_folder/bundle.jar bundle-${{ matrix.host.TARGET }}.jar
-#
-#            - name: Upload artifacts to publish
-#              continue-on-error: true
-#              uses: actions/upload-artifact@v4
-#              with:
-#                  name: java-${{ matrix.host.TARGET }}
-#                  path: |
-#                      java/bundle*.jar
+            - name: load-platform-matrix
+              id: load-platform-matrix
+              shell: bash
+              run: |
+                  # Get the matrix from the matrix.json file, without the object that has the IMAGE key
+                  export "PLATFORM_MATRIX=$(jq 'map(select(.PACKAGE_MANAGERS | contains(["maven"])))' < .github/json_matrices/build-matrix.json | jq -c .)"
+                  echo "PLATFORM_MATRIX=${PLATFORM_MATRIX}" >> $GITHUB_OUTPUT
+
+    create-binaries-to-publish:
+        needs: load-platform-matrix
+        if: github.repository_owner == 'valkey-io'
+        timeout-minutes: 35
+        env:
+            JAVA_VERSION: '11'
+        strategy:
+            # Run all jobs
+            fail-fast: false
+            matrix:
+                host: ${{fromJson(needs.load-platform-matrix.outputs.PLATFORM_MATRIX)}}
+
+        runs-on: ${{ matrix.host.RUNNER }}
+
+        steps:
+            - name: Setup self-hosted runner access
+              run: |
+                  GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
+                  if [ -d $GHA_HOME ]; then
+                    sudo chown -R $USER:$USER $GHA_HOME
+                    sudo rm -rf $GHA_HOME
+                    mkdir -p $GHA_HOME/valkey-glide
+                  else
+                    echo "No cleaning needed"
+                  fi
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Set the release version
+              shell: bash
+              run: |
+                  if ${{ github.event_name == 'pull_request' }}; then
+                    R_VERSION="0.1.0"
+                  elif ${{ github.event_name == 'workflow_dispatch' }}; then
+                    R_VERSION="${{ env.INPUT_VERSION }}"
+                  else
+                    R_VERSION=${GITHUB_REF:11}
+                  fi
+                  echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
+                  echo "Release version detected: $R_VERSION"
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  INPUT_VERSION: ${{ github.event.inputs.version }}
+
+            - name: Set up JDK
+              uses: actions/setup-java@v4
+              with:
+                  distribution: "temurin"
+                  java-version: ${{ env.JAVA_VERSION }}
+
+            - name: Install shared software dependencies
+              uses: ./.github/workflows/install-shared-dependencies
+              with:
+                  os: ${{ matrix.host.OS }}
+                  target: ${{ matrix.host.TARGET }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Install protoc (protobuf)
+              uses: arduino/setup-protoc@v3
+              with:
+                  version: "26.1"
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Create secret key ring file
+              working-directory: java/client
+              run: |
+                  echo "$SECRING_GPG" | base64 --decode > ./secring.gpg
+                  ls -ltr
+              env:
+                  SECRING_GPG: ${{ secrets.SECRING_GPG }}
+
+            - name: Build java client
+              working-directory: java
+              run: |
+                  ./gradlew :client:publishToMavenLocal -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
+              env:
+                  GLIDE_RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+
+            - name: Bundle JAR
+              working-directory: java
+              run: |
+                  src_folder=~/.m2/repository/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cd $src_folder
+                  jar -cvf bundle.jar *
+                  ls -ltr
+                  cd -
+                  cp $src_folder/bundle.jar bundle-${{ matrix.host.TARGET }}.jar
+
+            - name: Upload artifacts to publish
+              continue-on-error: true
+              uses: actions/upload-artifact@v4
+              with:
+                  name: java-${{ matrix.host.TARGET }}
+                  path: |
+                      java/bundle*.jar
 
     combine-binaries-to-one-directory:
-#        needs: create-binaries-to-publish
+        needs: create-binaries-to-publish
         runs-on: ubuntu-latest
         steps:
-            - name: Get status of Maven Central published artifact
-              run: |
-                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                  curl --request POST \
-                  --verbose \
-                  --header "Authorization: Bearer $BEARER_TOKEN" \
-                  'https://central.sonatype.com/api/v1/publisher/status?id=dad88cb3-0ba2-4602-a1cb-fbc027b2c500' \
-                  | jq
-
-#            -   name: Remove test upload from Maven Central
-#                run: |
-#                    BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-#                    curl --request DELETE \
-#                    --verbose \
-#                    --header "Authorization: Bearer $BEARER_TOKEN" \
-#                    'https://central.sonatype.com/api/v1/publisher/deployment/c45f4fc1-5ba8-4c10-a054-5b05a58f7f02'
-
-#            - name: Download published artifacts
-#              uses: actions/download-artifact@v4
-#
-#            - name: Set the release version
-#              shell: bash
-#              run: |
-#                if ${{ github.event_name == 'pull_request' }}; then
-#                  R_VERSION="0.1.0"
-#                elif ${{ github.event_name == 'workflow_dispatch' }}; then
-#                  R_VERSION="${{ env.INPUT_VERSION }}"
-#                else
-#                  R_VERSION=${GITHUB_REF:11}
-#                fi
-#                echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
-#                echo "Release version detected: $R_VERSION"
-#              env:
-#                INPUT_VERSION: ${{ github.event.inputs.version }}
-#
-#            - name: Move all required files to one directory
-#            # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
-#            # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
-#              run: |
-#                mkdir maven-files
-#                cd maven-files
-#                for file in $(find ../. -name "*.jar"); do jar xf "$file" ; done
-#
-#            - name: Generate sha1 and md5 files for all Maven files
-#              run: |
-#                cd maven-files
-#                for i in *.jar *.pom *.module; do md5sum $i | cut -d ' ' -f 1 > $i.md5; done
-#                for i in *.jar *.pom *.module; do sha1sum $i | cut -d ' ' -f 1 > $i.sha1; done
-#
-#            - name: Move files to the correct directory tree
-#              run: |
-#                  mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-#                  cp -a maven-files/* build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-#                  rm -rf build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}/META-INF
-#                  zip -r build build/io
-#                  tree
-#
-#            - name: Upload artifacts to publish
-#              uses: actions/upload-artifact@v4
-#              with:
-#                name: valkey-${{ env.RELEASE_VERSION }}
-#                path: |
-#                  build
-#
-#            - name: Publish to Maven Central
+#            - name: Get status of Maven Central published artifact
 #              run: |
 #                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
 #                  curl --request POST \
 #                  --verbose \
 #                  --header "Authorization: Bearer $BEARER_TOKEN" \
-#                  --form bundle=@build.zip \
-#                  https://central.sonatype.com/api/v1/publisher/upload
+#                  'https://central.sonatype.com/api/v1/publisher/status?id=dad88cb3-0ba2-4602-a1cb-fbc027b2c500' \
+#                  | jq
+
+            -   name: Remove test upload from Maven Central
+                run: |
+                    BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                    curl --request DELETE \
+                    --verbose \
+                    --header "Authorization: Bearer $BEARER_TOKEN" \
+                    'https://central.sonatype.com/api/v1/publisher/deployment/dad88cb3-0ba2-4602-a1cb-fbc027b2c500'
+
+            - name: Download published artifacts
+              uses: actions/download-artifact@v4
+
+            - name: Set the release version
+              shell: bash
+              run: |
+                if ${{ github.event_name == 'pull_request' }}; then
+                  R_VERSION="0.1.0"
+                elif ${{ github.event_name == 'workflow_dispatch' }}; then
+                  R_VERSION="${{ env.INPUT_VERSION }}"
+                else
+                  R_VERSION=${GITHUB_REF:11}
+                fi
+                echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
+                echo "Release version detected: $R_VERSION"
+              env:
+                INPUT_VERSION: ${{ github.event.inputs.version }}
+
+            - name: Move all required files to one directory
+            # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
+            # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
+              run: |
+                mkdir maven-files
+                cd maven-files
+                for file in $(find ../. -name "*.jar"); do jar xf "$file" ; done
+
+            - name: Generate sha1 and md5 files for all Maven files
+              run: |
+                cd maven-files
+                for i in *.jar *.pom *.module; do md5sum $i | cut -d ' ' -f 1 > $i.md5; done
+                for i in *.jar *.pom *.module; do sha1sum $i | cut -d ' ' -f 1 > $i.sha1; done
+
+            - name: Move files to the correct directory tree
+              run: |
+                  mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-files/* build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  rm -rf build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}/META-INF
+                  cd build
+                  zip -r build io
+                  tree
+
+            - name: Upload artifacts to publish
+              uses: actions/upload-artifact@v4
+              with:
+                name: valkey-${{ env.RELEASE_VERSION }}
+                path: |
+                  build
+
+            - name: Publish to Maven Central
+              run: |
+                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                  curl --request POST \
+                  --verbose \
+                  --header "Authorization: Bearer $BEARER_TOKEN" \
+                  --form bundle=@build.zip \
+                  https://central.sonatype.com/api/v1/publisher/upload
 
 
