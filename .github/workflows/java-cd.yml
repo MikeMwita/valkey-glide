@@ -56,159 +56,162 @@ jobs:
         runs-on: ${{ matrix.host.RUNNER }}
 
         steps:
-            - name: Get status of Maven Central published artifact
-              run: |
-                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                  curl --request POST \
-                  --header "Authorization: Bearer $BEARER_TOKEN" \
-                  'https://central.sonatype.com/api/v1/publisher/status?id=3b16bb78-8746-4310-bca6-7fa59c5ef416' \
-                  | jq
-
-#            - name: Remove test upload from Maven Central
+#            - name: Get status of Maven Central published artifact
 #              run: |
 #                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-#                  curl --request DELETE \
+#                  curl --request POST \
+#                  --verbose \
 #                  --header "Authorization: Bearer $BEARER_TOKEN" \
-#                  'https://central.sonatype.com/api/v1/publisher/deployment/26f10c8a-05f7-410f-b1d8-cd8dac9615ac'
+#                  'https://central.sonatype.com/api/v1/publisher/status?id=3b16bb78-8746-4310-bca6-7fa59c5ef416' \
+#                  | jq
 
-#            - name: Setup self-hosted runner access
-#              run: |
-#                  GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
-#                  if [ -d $GHA_HOME ]; then
-#                    sudo chown -R $USER:$USER $GHA_HOME
-#                    sudo rm -rf $GHA_HOME
-#                    mkdir -p $GHA_HOME/valkey-glide
-#                  else
-#                    echo "No cleaning needed"
-#                  fi
-#            - uses: actions/checkout@v4
-#              with:
-#                  submodules: recursive
-#
-#            - name: Set the release version
-#              shell: bash
-#              run: |
-#                  if ${{ github.event_name == 'pull_request' }}; then
-#                    R_VERSION="0.1.0"
-#                  elif ${{ github.event_name == 'workflow_dispatch' }}; then
-#                    R_VERSION="${{ env.INPUT_VERSION }}"
-#                  else
-#                    R_VERSION=${GITHUB_REF:11}
-#                  fi
-#                  echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
-#                  echo "Release version detected: $R_VERSION"
-#              env:
-#                  EVENT_NAME: ${{ github.event_name }}
-#                  INPUT_VERSION: ${{ github.event.inputs.version }}
-#
-#            - name: Set up JDK
-#              uses: actions/setup-java@v4
-#              with:
-#                  distribution: "temurin"
-#                  java-version: ${{ env.JAVA_VERSION }}
-#
-#            - name: Install shared software dependencies
-#              uses: ./.github/workflows/install-shared-dependencies
-#              with:
-#                  os: ${{ matrix.host.OS }}
-#                  target: ${{ matrix.host.TARGET }}
-#                  github-token: ${{ secrets.GITHUB_TOKEN }}
-#
-#            - name: Install protoc (protobuf)
-#              uses: arduino/setup-protoc@v3
-#              with:
-#                  version: "26.1"
-#                  repo-token: ${{ secrets.GITHUB_TOKEN }}
-#
-#            - name: Create secret key ring file
-#              working-directory: java/client
-#              run: |
-#                  echo "$SECRING_GPG" | base64 --decode > ./secring.gpg
-#                  ls -ltr
-#              env:
-#                  SECRING_GPG: ${{ secrets.SECRING_GPG }}
-#
-#            - name: Build java client
-#              working-directory: java
-#              run: |
-#                  ./gradlew :client:publishToMavenLocal -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
-#              env:
-#                  GLIDE_RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
-#
-#            - name: Bundle JAR
-#              working-directory: java
-#              run: |
-#                  src_folder=~/.m2/repository/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-#                  cd $src_folder
-#                  jar -cvf bundle.jar *
-#                  ls -ltr
-#                  cd -
-#                  cp $src_folder/bundle.jar bundle-${{ matrix.host.TARGET }}.jar
-#
-#            - name: Upload artifacts to publish
-#              continue-on-error: true
-#              uses: actions/upload-artifact@v4
-#              with:
-#                  name: java-${{ matrix.host.TARGET }}
-#                  path: |
-#                      java/bundle*.jar
-#
-#    combine-binaries-to-one-directory:
-#        needs: create-binaries-to-publish
-#        runs-on: ubuntu-latest
-#        steps:
-#            - name: Download published artifacts
-#              uses: actions/download-artifact@v4
-#
-#            - name: Set the release version
-#              shell: bash
-#              run: |
-#                if ${{ github.event_name == 'pull_request' }}; then
-#                  R_VERSION="0.1.0"
-#                elif ${{ github.event_name == 'workflow_dispatch' }}; then
-#                  R_VERSION="${{ env.INPUT_VERSION }}"
-#                else
-#                  R_VERSION=${GITHUB_REF:11}
-#                fi
-#                echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
-#                echo "Release version detected: $R_VERSION"
-#              env:
-#                INPUT_VERSION: ${{ github.event.inputs.version }}
-#
-#            - name: Move all required files to one directory
-#            # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
-#            # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
-#              run: |
-#                mkdir maven-files
-#                cd maven-files
-#                for file in $(find ../. -name "*.jar"); do jar xf "$file" ; done
-#
-#            - name: Generate sha1 and md5 files for all Maven files
-#              run: |
-#                cd maven-files
-#                for i in *.jar *.pom *.module; do md5sum $i | cut -d ' ' -f 1 > $i.md5; done
-#                for i in *.jar *.pom *.module; do sha1sum $i | cut -d ' ' -f 1 > $i.sha1; done
-#
-#            - name: Move files to the correct directory tree
-#              run: |
-#                  mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-#                  cp -a maven-files/* build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-#                  tree
-#                  zip -r build.zip build
-#
-#            - name: Upload artifacts to publish
-#              uses: actions/upload-artifact@v4
-#              with:
-#                name: valkey-${{ env.RELEASE_VERSION }}
-#                path: |
-#                  build
-#
+            - name: Remove test upload from Maven Central
+              run: |
+                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                  curl --request DELETE \
+                  --verbose \
+                  --header "Authorization: Bearer $BEARER_TOKEN" \
+                  'https://central.sonatype.com/api/v1/publisher/deployment/3b16bb78-8746-4310-bca6-7fa59c5ef416'
+
+            - name: Setup self-hosted runner access
+              run: |
+                  GHA_HOME=/home/ubuntu/actions-runner/_work/valkey-glide
+                  if [ -d $GHA_HOME ]; then
+                    sudo chown -R $USER:$USER $GHA_HOME
+                    sudo rm -rf $GHA_HOME
+                    mkdir -p $GHA_HOME/valkey-glide
+                  else
+                    echo "No cleaning needed"
+                  fi
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - name: Set the release version
+              shell: bash
+              run: |
+                  if ${{ github.event_name == 'pull_request' }}; then
+                    R_VERSION="0.1.0"
+                  elif ${{ github.event_name == 'workflow_dispatch' }}; then
+                    R_VERSION="${{ env.INPUT_VERSION }}"
+                  else
+                    R_VERSION=${GITHUB_REF:11}
+                  fi
+                  echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
+                  echo "Release version detected: $R_VERSION"
+              env:
+                  EVENT_NAME: ${{ github.event_name }}
+                  INPUT_VERSION: ${{ github.event.inputs.version }}
+
+            - name: Set up JDK
+              uses: actions/setup-java@v4
+              with:
+                  distribution: "temurin"
+                  java-version: ${{ env.JAVA_VERSION }}
+
+            - name: Install shared software dependencies
+              uses: ./.github/workflows/install-shared-dependencies
+              with:
+                  os: ${{ matrix.host.OS }}
+                  target: ${{ matrix.host.TARGET }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Install protoc (protobuf)
+              uses: arduino/setup-protoc@v3
+              with:
+                  version: "26.1"
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Create secret key ring file
+              working-directory: java/client
+              run: |
+                  echo "$SECRING_GPG" | base64 --decode > ./secring.gpg
+                  ls -ltr
+              env:
+                  SECRING_GPG: ${{ secrets.SECRING_GPG }}
+
+            - name: Build java client
+              working-directory: java
+              run: |
+                  ./gradlew :client:publishToMavenLocal -Psigning.secretKeyRingFile=secring.gpg -Psigning.password="${{ secrets.GPG_PASSWORD }}" -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
+              env:
+                  GLIDE_RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+
+            - name: Bundle JAR
+              working-directory: java
+              run: |
+                  src_folder=~/.m2/repository/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cd $src_folder
+                  jar -cvf bundle.jar *
+                  ls -ltr
+                  cd -
+                  cp $src_folder/bundle.jar bundle-${{ matrix.host.TARGET }}.jar
+
+            - name: Upload artifacts to publish
+              continue-on-error: true
+              uses: actions/upload-artifact@v4
+              with:
+                  name: java-${{ matrix.host.TARGET }}
+                  path: |
+                      java/bundle*.jar
+
+    combine-binaries-to-one-directory:
+        needs: create-binaries-to-publish
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download published artifacts
+              uses: actions/download-artifact@v4
+
+            - name: Set the release version
+              shell: bash
+              run: |
+                if ${{ github.event_name == 'pull_request' }}; then
+                  R_VERSION="0.1.0"
+                elif ${{ github.event_name == 'workflow_dispatch' }}; then
+                  R_VERSION="${{ env.INPUT_VERSION }}"
+                else
+                  R_VERSION=${GITHUB_REF:11}
+                fi
+                echo "RELEASE_VERSION=${R_VERSION}" >> $GITHUB_ENV
+                echo "Release version detected: $R_VERSION"
+              env:
+                INPUT_VERSION: ${{ github.event.inputs.version }}
+
+            - name: Move all required files to one directory
+            # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
+            # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
+              run: |
+                mkdir maven-files
+                cd maven-files
+                for file in $(find ../. -name "*.jar"); do jar xf "$file" ; done
+
+            - name: Generate sha1 and md5 files for all Maven files
+              run: |
+                cd maven-files
+                for i in *.jar *.pom *.module; do md5sum $i | cut -d ' ' -f 1 > $i.md5; done
+                for i in *.jar *.pom *.module; do sha1sum $i | cut -d ' ' -f 1 > $i.sha1; done
+
+            - name: Move files to the correct directory tree
+              run: |
+                  mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-files/* build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  zip -r build build
+                  tree
+
+            - name: Upload artifacts to publish
+              uses: actions/upload-artifact@v4
+              with:
+                name: valkey-${{ env.RELEASE_VERSION }}
+                path: |
+                  build
+
 #            - name: Publish to Maven Central
 #              run: |
 #                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
 #                  curl --request POST \
+#                  --verbose \
 #                  --header "Authorization: Bearer $BEARER_TOKEN" \
 #                  --form bundle=@build.zip \
 #                  https://central.sonatype.com/api/v1/publisher/upload
-#
-#
+
+
