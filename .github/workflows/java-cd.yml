@@ -60,24 +60,24 @@ jobs:
 #              run: |
 #                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
 #                  curl --request POST \
-#                  --verbose \
+#                  -I
 #                  --header "Authorization: Bearer $BEARER_TOKEN" \
 #                  'https://central.sonatype.com/api/v1/publisher/status?id=66032ca6-96b0-4fb5-b02c-ea37d64926d6' \
 #                  | jq
 #
 #                  curl --request POST \
-#                  --verbose \
+#                  -I \
 #                  --header "Authorization: Bearer $BEARER_TOKEN" \
 #                  'https://central.sonatype.com/api/v1/publisher/status?id=66032ca6-96b0-4fb5-b02c-ea37d64926d6' \
 #                  | jq
 
-            - name: Remove test upload from Maven Central
-              run: |
-                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                  curl --request DELETE \
-                  --verbose \
-                  --header "Authorization: Bearer $BEARER_TOKEN" \
-                  'https://central.sonatype.com/api/v1/publisher/deployment/26f10c8a-05f7-410f-b1d8-cd8dac9615ac'
+#            - name: Remove test upload from Maven Central
+#              run: |
+#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+#                  curl --request DELETE \
+#                  --verbose \
+#                  --header "Authorization: Bearer $BEARER_TOKEN" \
+#                  'https://central.sonatype.com/api/v1/publisher/deployment/26f10c8a-05f7-410f-b1d8-cd8dac9615ac'
 
             - name: Setup self-hosted runner access
               run: |
@@ -187,14 +187,9 @@ jobs:
             # TODO: Add `./java-aarch64-unknown-linux-gnu/* bundles` when we are able to support a linux arm runner.
             # TODO: Add "maven" to linux arm PACKAGE_MANAGER in build-matrix.json.
               run: |
-                mkdir bundles
                 mkdir maven-files
-                for file in $(find . -name "*.jar"); do jar xf "$file" ; done
-                mv valkey-glide-*.asc maven-files
-                mv valkey-glide-*.pom maven-files
-                mv valkey-glide-*-sources.jar maven-files
-                mv valkey-glide-*.module maven-files
-                mv valkey-glide-*.jar maven-files
+                cd maven-files
+                for file in $(find ../. -name "*.jar"); do jar xf "$file" ; done
 
             - name: Generate sha1 and md5 files for all Maven files
               run: |
@@ -205,8 +200,9 @@ jobs:
             - name: Move files to the correct directory tree
               run: |
                   mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  cp -a maven-files/. build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  zip build build
+                  cp -a maven-files/ build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  tree
+                  zip -r build.zip build
 
             - name: Upload artifacts to publish
               uses: actions/upload-artifact@v4
@@ -215,13 +211,13 @@ jobs:
                 path: |
                   build.zip
 
-#            - name: Publish to Maven Central
-#              run: |
-#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-#                  curl --request POST \
-#                  --verbose \
-#                  --header "Authorization: Bearer $BEARER_TOKEN" \
-#                  --form bundle=@build.zip \
-#                  https://central.sonatype.com/api/v1/publisher/upload
+            - name: Publish to Maven Central
+              run: |
+                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                  curl --request POST \
+                  -I
+                  --header "Authorization: Bearer $BEARER_TOKEN" \
+                  --form bundle=@build.zip \
+                  https://central.sonatype.com/api/v1/publisher/upload
 
 
