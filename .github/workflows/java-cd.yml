@@ -151,13 +151,13 @@ jobs:
 #                  'https://central.sonatype.com/api/v1/publisher/status?id=dad88cb3-0ba2-4602-a1cb-fbc027b2c500' \
 #                  | jq
 
-            -   name: Remove test upload from Maven Central
-                run: |
-                    BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                    curl --request DELETE \
-                    --verbose \
-                    --header "Authorization: Bearer $BEARER_TOKEN" \
-                    'https://central.sonatype.com/api/v1/publisher/deployment/dad88cb3-0ba2-4602-a1cb-fbc027b2c500'
+#            -   name: Remove test upload from Maven Central
+#                run: |
+#                    BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+#                    curl --request DELETE \
+#                    --verbose \
+#                    --header "Authorization: Bearer $BEARER_TOKEN" \
+#                    'https://central.sonatype.com/api/v1/publisher/deployment/dad88cb3-0ba2-4602-a1cb-fbc027b2c500'
 
             - name: Download published artifacts
               uses: actions/download-artifact@v4
