@@ -65,13 +65,13 @@ jobs:
 #                  'https://central.sonatype.com/api/v1/publisher/status?id=3b16bb78-8746-4310-bca6-7fa59c5ef416' \
 #                  | jq
 
-            - name: Remove test upload from Maven Central
-              run: |
-                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-                  curl --request DELETE \
-                  --verbose \
-                  --header "Authorization: Bearer $BEARER_TOKEN" \
-                  'https://central.sonatype.com/api/v1/publisher/deployment/3b16bb78-8746-4310-bca6-7fa59c5ef416'
+#            - name: Remove test upload from Maven Central
+#              run: |
+#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+#                  curl --request DELETE \
+#                  --verbose \
+#                  --header "Authorization: Bearer $BEARER_TOKEN" \
+#                  'https://central.sonatype.com/api/v1/publisher/deployment/3b16bb78-8746-4310-bca6-7fa59c5ef416'
 
             - name: Setup self-hosted runner access
               run: |
@@ -195,6 +195,7 @@ jobs:
               run: |
                   mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
                   cp -a maven-files/* build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  rm -rf build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}/META-INF
                   zip -r build build
                   tree
 
@@ -205,13 +206,13 @@ jobs:
                 path: |
                   build
 
-#            - name: Publish to Maven Central
-#              run: |
-#                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
-#                  curl --request POST \
-#                  --verbose \
-#                  --header "Authorization: Bearer $BEARER_TOKEN" \
-#                  --form bundle=@build.zip \
-#                  https://central.sonatype.com/api/v1/publisher/upload
+            - name: Publish to Maven Central
+              run: |
+                  BEARER_TOKEN=$(echo "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" | base64)
+                  curl --request POST \
+                  --verbose \
+                  --header "Authorization: Bearer $BEARER_TOKEN" \
+                  --form bundle=@build.zip \
+                  https://central.sonatype.com/api/v1/publisher/upload
 
 
