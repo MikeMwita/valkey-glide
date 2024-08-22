@@ -199,14 +199,12 @@ jobs:
                 mkdir bundles
                 mkdir maven-files
                 find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./bundle.jar
-                mv ./java-*/* maven-files
                 jar xf bundle.jar
-                ls
                 mv valkey-glide-*.asc maven-files
                 mv valkey-glide-*.pom maven-files
                 mv valkey-glide-*-sources.jar maven-files
                 mv valkey-glide-*.module maven-files
-                mv valkey-glide-*javadoc.jar maven-files
+                mv valkey-glide-*.jar maven-files
 
             - name: Generate sha1 files for all Maven files
               run: |
