@@ -198,6 +198,7 @@ jobs:
               run: |
                 mkdir bundles
                 mkdir maven-files
+                ls
                 find . -name "*.jar" | head -1 | xargs -I{} cp "{}" ./bundle.jar
                 mv ./java-*/* maven-files
                 unzip bundle.jar
