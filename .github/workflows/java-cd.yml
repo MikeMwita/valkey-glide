@@ -123,7 +123,7 @@ jobs:
             - name: Bundle JAR
               working-directory: java
               run: |
-                  src_folder=~/.m2/repository/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
+                  src_folder=~/.m2/repository/io/github/gumpacg/valkey-glide/${{ env.RELEASE_VERSION }}
                   cd $src_folder
                   jar -cvf bundle.jar *
                   ls -ltr
@@ -193,9 +193,9 @@ jobs:
 
             - name: Move files to the correct directory tree
               run: |
-                  mkdir -p build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  cp -a maven-files/* build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}
-                  rm -rf build/io/valkey/valkey-glide/${{ env.RELEASE_VERSION }}/META-INF
+                  mkdir -p build/io/github/gumpacg/valkey-glide/${{ env.RELEASE_VERSION }}
+                  cp -a maven-files/* build/io/github/gumpacg/valkey-glide/${{ env.RELEASE_VERSION }}
+                  rm -rf build/io/github/gumpacg/valkey-glide/${{ env.RELEASE_VERSION }}/META-INF
                   cd build
                   zip -r ../build io
                   tree
