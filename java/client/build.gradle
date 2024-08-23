@@ -187,7 +187,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
-            groupId = 'io.valkey'
+            groupId = 'io.github.gumpacg'
             artifactId = 'valkey-glide'
             version = System.getenv("GLIDE_RELEASE_VERSION") ?: defaultReleaseVersion;
             pom {
@@ -217,16 +217,6 @@ publishing {
         }
     }
     repositories {
-        maven {
-            name = "OSSRH"
-
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-
-            credentials {
-                username = System.getenv("CENTRAL_TOKEN_USERNAME")
-                password = System.getenv("CENTRAL_TOKEN_PASSWORD")
-            }
-        }
         mavenLocal()
     }
 }
