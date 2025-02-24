@@ -10,6 +10,7 @@
 * Go: Add `ZLEXCOUNT` ([#3140](https://github.com/valkey-io/valkey-glide/pull/3140))
 * Go: Updating examples for `ZInterCard` ([#3232](https://github.com/valkey-io/valkey-glide/pull/3232))
 * Go: Fix channel passing from Go to Rust by using `runtime.Pinner` or `cgo.Handle` ([#3208](https://github.com/valkey-io/valkey-glide/pull/3208))
+* Go: Add `BZPOPMAX` and ` ZMPOP` [#2971](https://github.com/valkey-io/valkey-glide/pull/3257)
 
 #### Breaking Changes
 
